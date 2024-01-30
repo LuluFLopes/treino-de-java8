@@ -140,16 +140,12 @@ public class StreamApiTest {
     @Test
     @DisplayName("Get the 3 most recent placed order")
     public void exercise6() {
-        long startTime = System.currentTimeMillis();
-        List<Order> result = orderRepo.findAll()
-                .stream()
+        List<Order> orders = orderRepo.findAll().stream()
                 .sorted(Comparator.comparing(Order::getOrderDate).reversed())
                 .limit(3)
-                .collect(Collectors.toList());
+                .toList();
 
-        long endTime = System.currentTimeMillis();
-        log.info(String.format("exercise 6 - execution time: %1$d ms", (endTime - startTime)));
-        result.forEach(o -> log.info(o.toString()));
+        assertTrue(orders.size() > 0);
     }
 
     @Test
