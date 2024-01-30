@@ -7,6 +7,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -151,18 +152,20 @@ public class StreamApiTest {
     @Test
     @DisplayName("Get a list of products which was ordered on 15-Mar-2021")
     public void exercise7() {
-        long startTime = System.currentTimeMillis();
-        List<Product> result = orderRepo.findAll()
-                .stream()
-                .filter(o -> o.getOrderDate().isEqual(LocalDate.of(2021, 3, 15)))
-                .peek(o -> System.out.println(o.toString()))
-                .flatMap(o -> o.getProducts().stream())
-                .distinct()
-                .collect(Collectors.toList());
+        LocalDate dataPesquisada = LocalDate.of(2021, 3, 15);
 
-        long endTime = System.currentTimeMillis();
-        log.info(String.format("exercise 7 - execution time: %1$d ms", (endTime - startTime)));
-        result.forEach(o -> log.info(o.toString()));
+        List<Product> estrategia1 = orderRepo.findAll().stream()
+                .filter(ord -> ord.getOrderDate().equals(dataPesquisada))
+                .map(Order::getProducts)
+                .flatMap(Collection::stream)
+                .distinct()
+                .toList();
+
+        List<Product> estrategia2 = productRepo.findAll().stream()
+                .filter(prd -> prd.getOrders().stream().anyMatch(ord -> ord.getOrderDate().equals(dataPesquisada)))
+                .toList();
+
+        assertEquals(estrategia1.size(), estrategia2.size());
     }
 
     @Test
