@@ -171,18 +171,13 @@ public class StreamApiTest {
     @Test
     @DisplayName("Calculate the total lump of all orders placed in Feb 2021")
     public void exercise8() {
-        long startTime = System.currentTimeMillis();
-        double result = orderRepo.findAll()
-                .stream()
-                .filter(o -> o.getOrderDate().compareTo(LocalDate.of(2021, 2, 1)) >= 0)
-                .filter(o -> o.getOrderDate().compareTo(LocalDate.of(2021, 3, 1)) < 0)
-                .flatMap(o -> o.getProducts().stream())
+        double totalVendidoEmFevereiro = orderRepo.findAll().stream()
+                .filter(ord -> ord.getOrderDate().getMonth().equals(LocalDate.of(2021, 2, 1).getMonth()))
+                .flatMap(ord -> ord.getProducts().stream())
                 .mapToDouble(Product::getPrice)
                 .sum();
 
-        long endTime = System.currentTimeMillis();
-        log.info(String.format("exercise 8 - execution time: %1$d ms", (endTime - startTime)));
-        log.info("Total lump sum = " + result);
+        assertEquals(11995.36, totalVendidoEmFevereiro);
     }
 
     @Test
