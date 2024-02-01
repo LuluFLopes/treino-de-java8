@@ -209,6 +209,14 @@ public class StreamApiTest {
     @Test
     @DisplayName("Obtain statistics summary of all products belong to \"Books\" category")
     public void exercise10() {
+        DoubleSummaryStatistics books = productRepo.findAll().stream()
+                .filter(prd -> prd.getCategory().equals("Books"))
+                .mapToDouble(Product::getPrice)
+                .summaryStatistics();
+
+        assertTrue(books.getSum() != 0);
+        assertTrue(books.getAverage() != 0);
+        assertTrue(books.getCount() != 0);
     }
 
     @Test
