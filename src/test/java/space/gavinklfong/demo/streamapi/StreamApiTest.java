@@ -196,34 +196,19 @@ public class StreamApiTest {
     @Test
     @DisplayName("Calculate the average price of all orders placed on 15-Mar-2021")
     public void exercise9() {
-        long startTime = System.currentTimeMillis();
-        double result = orderRepo.findAll()
-                .stream()
-                .filter(o -> o.getOrderDate().isEqual(LocalDate.of(2021, 3, 15)))
-                .flatMap(o -> o.getProducts().stream())
+        double mediaDeValor = orderRepo.findAll().stream()
+                .filter(ord -> ord.getOrderDate().equals(LocalDate.of(2021, 3, 15)))
+                .flatMap(ord -> ord.getProducts().stream())
                 .mapToDouble(Product::getPrice)
-                .average().getAsDouble();
+                .average()
+                .orElse(0);
 
-        long endTime = System.currentTimeMillis();
-        log.info(String.format("exercise 9 - execution time: %1$d ms", (endTime - startTime)));
-        log.info("Average = " + result);
+        assertEquals(352.89, mediaDeValor);
     }
 
     @Test
     @DisplayName("Obtain statistics summary of all products belong to \"Books\" category")
     public void exercise10() {
-        long startTime = System.currentTimeMillis();
-        DoubleSummaryStatistics statistics = productRepo.findAll()
-                .stream()
-                .filter(p -> p.getCategory().equalsIgnoreCase("Books"))
-                .mapToDouble(Product::getPrice)
-                .summaryStatistics();
-
-        long endTime = System.currentTimeMillis();
-        log.info(String.format("exercise 10 - execution time: %1$d ms", (endTime - startTime)));
-        log.info(String.format("count = %1$d, average = %2$f, max = %3$f, min = %4$f, sum = %5$f",
-                statistics.getCount(), statistics.getAverage(), statistics.getMax(), statistics.getMin(), statistics.getSum()));
-
     }
 
     @Test
