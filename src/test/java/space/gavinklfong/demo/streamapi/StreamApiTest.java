@@ -222,31 +222,17 @@ public class StreamApiTest {
     @Test
     @DisplayName("Obtain a mapping of order id and the order's product count")
     public void exercise11() {
-        long startTime = System.currentTimeMillis();
-        Map<Long, Integer> result = orderRepo.findAll()
-                .stream()
-                .collect(
-                        Collectors.toMap(
-                                Order::getId,
-                                order -> order.getProducts().size())
-                );
+        Map<Long, Integer> map = orderRepo.findAll().stream()
+                .collect(Collectors.toMap(Order::getId, ord -> ord.getProducts().size()));
 
-        long endTime = System.currentTimeMillis();
-        log.info(String.format("exercise 11 - execution time: %1$d ms", (endTime - startTime)));
-        log.info(result.toString());
+        assertEquals(3, map.get(1L).intValue());
     }
 
     @Test
     @DisplayName("Obtain a data map of customer and list of orders")
     public void exercise12() {
-        long startTime = System.currentTimeMillis();
-        Map<Customer, List<Order>> result = orderRepo.findAll()
-                .stream()
+        Map<Customer, List<Order>> collect = orderRepo.findAll().stream()
                 .collect(Collectors.groupingBy(Order::getCustomer));
-
-        long endTime = System.currentTimeMillis();
-        log.info(String.format("exercise 12 - execution time: %1$d ms", (endTime - startTime)));
-        log.info(result.toString());
     }
 
     @Test
