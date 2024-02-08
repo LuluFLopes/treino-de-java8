@@ -7,6 +7,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -140,101 +141,82 @@ public class StreamApiTest {
     @Test
     @DisplayName("Get the 3 most recent placed order")
     public void exercise6() {
-        long startTime = System.currentTimeMillis();
-        List<Order> result = orderRepo.findAll()
-                .stream()
+        List<Order> orders = orderRepo.findAll().stream()
                 .sorted(Comparator.comparing(Order::getOrderDate).reversed())
                 .limit(3)
-                .collect(Collectors.toList());
+                .toList();
 
-        long endTime = System.currentTimeMillis();
-        log.info(String.format("exercise 6 - execution time: %1$d ms", (endTime - startTime)));
-        result.forEach(o -> log.info(o.toString()));
+        assertTrue(orders.size() > 0);
     }
 
     @Test
     @DisplayName("Get a list of products which was ordered on 15-Mar-2021")
     public void exercise7() {
-        long startTime = System.currentTimeMillis();
-        List<Product> result = orderRepo.findAll()
-                .stream()
-                .filter(o -> o.getOrderDate().isEqual(LocalDate.of(2021, 3, 15)))
-                .peek(o -> System.out.println(o.toString()))
-                .flatMap(o -> o.getProducts().stream())
-                .distinct()
-                .collect(Collectors.toList());
+        LocalDate dataPesquisada = LocalDate.of(2021, 3, 15);
 
-        long endTime = System.currentTimeMillis();
-        log.info(String.format("exercise 7 - execution time: %1$d ms", (endTime - startTime)));
-        result.forEach(o -> log.info(o.toString()));
+        List<Product> estrategia1 = orderRepo.findAll().stream()
+                .filter(ord -> ord.getOrderDate().equals(dataPesquisada))
+                .map(Order::getProducts)
+                .flatMap(Collection::stream)
+                .distinct()
+                .toList();
+
+        List<Product> estrategia2 = productRepo.findAll().stream()
+                .filter(prd -> prd.getOrders().stream().anyMatch(ord -> ord.getOrderDate().equals(dataPesquisada)))
+                .toList();
+
+        assertEquals(estrategia1.size(), estrategia2.size());
     }
 
     @Test
     @DisplayName("Calculate the total lump of all orders placed in Feb 2021")
     public void exercise8() {
-        long startTime = System.currentTimeMillis();
-        double result = orderRepo.findAll()
-                .stream()
-                .filter(o -> o.getOrderDate().compareTo(LocalDate.of(2021, 2, 1)) >= 0)
-                .filter(o -> o.getOrderDate().compareTo(LocalDate.of(2021, 3, 1)) < 0)
-                .flatMap(o -> o.getProducts().stream())
+        double totalVendidoEmFevereiro = orderRepo.findAll().stream()
+                .filter(ord -> ord.getOrderDate().getMonth().equals(LocalDate.of(2021, 2, 1).getMonth()))
+                .flatMap(ord -> ord.getProducts().stream())
                 .mapToDouble(Product::getPrice)
                 .sum();
 
-        long endTime = System.currentTimeMillis();
-        log.info(String.format("exercise 8 - execution time: %1$d ms", (endTime - startTime)));
-        log.info("Total lump sum = " + result);
+        assertEquals(11995.36, totalVendidoEmFevereiro);
     }
 
     @Test
     @DisplayName("Calculate the total lump of all orders placed in Feb 2021 (using reduce with BiFunction)")
     public void exercise8a() {
-        BiFunction<Double, Product, Double> accumulator = (acc, product) -> acc + product.getPrice();
+        BiFunction<Double, Product, Double> somandoValoTotal = (soma, produto) -> soma + produto.getPrice();
 
-        long startTime = System.currentTimeMillis();
-        double result = orderRepo.findAll()
-                .stream()
-                .filter(o -> o.getOrderDate().compareTo(LocalDate.of(2021, 2, 1)) >= 0)
-                .filter(o -> o.getOrderDate().compareTo(LocalDate.of(2021, 3, 1)) < 0)
-                .flatMap(o -> o.getProducts().stream())
-                .reduce(0D, accumulator, Double::sum);
+        Double totalVendidoEmFevereiro = orderRepo.findAll().stream()
+                .filter(ord -> ord.getOrderDate().getMonth().equals(LocalDate.of(2021, 2, 1).getMonth()))
+                .flatMap(ord -> ord.getProducts().stream())
+                .reduce(0.0, somandoValoTotal, Double::sum);
 
-        long endTime = System.currentTimeMillis();
-        log.info(String.format("exercise 8a - execution time: %1$d ms", (endTime - startTime)));
-        log.info("Total lump sum = " + result);
+        assertEquals(11995.36, totalVendidoEmFevereiro);
     }
 
     @Test
     @DisplayName("Calculate the average price of all orders placed on 15-Mar-2021")
     public void exercise9() {
-        long startTime = System.currentTimeMillis();
-        double result = orderRepo.findAll()
-                .stream()
-                .filter(o -> o.getOrderDate().isEqual(LocalDate.of(2021, 3, 15)))
-                .flatMap(o -> o.getProducts().stream())
+        double mediaDeValor = orderRepo.findAll().stream()
+                .filter(ord -> ord.getOrderDate().equals(LocalDate.of(2021, 3, 15)))
+                .flatMap(ord -> ord.getProducts().stream())
                 .mapToDouble(Product::getPrice)
-                .average().getAsDouble();
+                .average()
+                .orElse(0);
 
-        long endTime = System.currentTimeMillis();
-        log.info(String.format("exercise 9 - execution time: %1$d ms", (endTime - startTime)));
-        log.info("Average = " + result);
+        assertEquals(352.89, mediaDeValor);
     }
 
     @Test
     @DisplayName("Obtain statistics summary of all products belong to \"Books\" category")
     public void exercise10() {
-        long startTime = System.currentTimeMillis();
-        DoubleSummaryStatistics statistics = productRepo.findAll()
-                .stream()
-                .filter(p -> p.getCategory().equalsIgnoreCase("Books"))
+        DoubleSummaryStatistics books = productRepo.findAll().stream()
+                .filter(prd -> prd.getCategory().equals("Books"))
                 .mapToDouble(Product::getPrice)
                 .summaryStatistics();
 
-        long endTime = System.currentTimeMillis();
-        log.info(String.format("exercise 10 - execution time: %1$d ms", (endTime - startTime)));
-        log.info(String.format("count = %1$d, average = %2$f, max = %3$f, min = %4$f, sum = %5$f",
-                statistics.getCount(), statistics.getAverage(), statistics.getMax(), statistics.getMin(), statistics.getSum()));
-
+        assertTrue(books.getSum() != 0);
+        assertTrue(books.getAverage() != 0);
+        assertTrue(books.getCount() != 0);
     }
 
     @Test

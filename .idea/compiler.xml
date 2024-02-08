@@ -7,12 +7,14 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="streamapi" />
+        <module name="treino-de-java8" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="streamapi" options="-parameters" />
+      <module name="treino-de-java8" options="-parameters" />
     </option>
   </component>
 </project>
